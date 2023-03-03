@@ -1,0 +1,119 @@
+<script
+  src="https://code.jquery.com/jquery-3.6.3.js"
+  integrity="sha256-nQLuAZGRRcILA+6dMBOvcRh5Pe310sBpanc6+QBmyVM="
+  crossorigin="anonymous"
+></script>
+<script src="//unpkg.com/alpinejs" defer></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<link
+  href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
+  rel="stylesheet"
+/>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+<div
+  class="w-96 flex flex-col justify-center m-auto font-bold"
+  x-data="data('Vietnam')"
+>
+  <span class="text-xl text-indigo-600">Simple address form</span>
+  <form
+    @submit.prevent="formData.handleSubmitForm()"
+    class="flex flex-col mt-10 justify-center space-y-3"
+  >
+    <!--province-->
+    <div class="flex justify-around" x-init="()=>fetchData.fetchProvince()">
+      <span class="text-gray-800 w-20">Province</span>
+      <select
+        @change="formData.setProvince($event)"
+        class="border shadow-md w-52"
+      >
+        <option value="" selected>Select Province</option>
+        <template x-for="province in fetchData.provincesList">
+          <option
+            x-text="province.name"
+            :value="JSON.stringify({name: province.name, districts: province.districts})"
+          ></option>
+        </template>
+      </select>
+    </div>
+    <!--province-->
+    <!--city-->
+    <div class="flex justify-around">
+      <span class="text-gray-800 w-20">City</span>
+      <select
+        x-model="formData.city"
+        class="border shadow-md w-52"
+        x-if="!formData.province"
+      >
+        <option value="" selected>Select City</option>
+        <template
+          x-effect="fetchData.assignDistricts(formData.province)"
+          x-for="city in fetchData.citiesList"
+        >
+          <option x-text="city.name"></option>
+        </template>
+      </select>
+    </div>
+    <!--city-->
+    <!--address-->
+    <div class="flex justify-around">
+      <span class="text-gray-800 w-20">Address</span>
+      <input x-model="formData.address" class="border shadow-md" />
+    </div>
+    <!--address-->
+    <button
+      class="p-2 text-white font-bold bg-indigo-600 rounded-md"
+      type="submit"
+    >
+      Submit form
+    </button>
+  </form>
+</div>
+<script>
+  const url = "https://provinces.open-api.vn/api/?depth=2";
+  const searchUrl = "https://provinces.open-api.vn/api/d/search";
+
+  function data(country) {
+    return {
+      fetchData: {
+        provincesList: [],
+        citiesList: [],
+
+        async fetchProvince() {
+          const data = await axios.get(url);
+          this.provincesList = data.data;
+        },
+        assignDistricts(province) {
+          if (!province.name) return;
+
+          this.citiesList = province.districts;
+        },
+      },
+      formData: {
+        country,
+        province: {
+          name: "",
+          districts: [],
+        },
+        city: "",
+        address: "",
+
+        setProvince(event) {
+          const parsedProvince = JSON.parse(event.target.value);
+
+          this.province.name = parsedProvince.name;
+          this.province.districts = parsedProvince.districts;
+        },
+        handleSubmitForm() {
+          console.log({
+            country: this.country,
+            province: this.province.name,
+            city: this.city,
+            address: this.address,
+          });
+        },
+      },
+    };
+  }
+</script>

@@ -18,18 +18,15 @@
 >
   <span class="text-xl text-indigo-600">Simple address form</span>
   <form
-    @submit.prevent="formData.handleSubmitForm()"
+    @submit.prevent="handleSubmitForm()"
     class="flex flex-col mt-10 justify-center space-y-3"
   >
     <!--province-->
-    <div class="flex justify-around" x-init="()=>fetchData.fetchProvince()">
+    <div class="flex justify-around" x-init="()=>fetchProvince()">
       <span class="text-gray-800 w-20">Province</span>
-      <select
-        @change="formData.setProvince($event)"
-        class="border shadow-md w-52"
-      >
+      <select @change="setProvince($event)" class="border shadow-md w-52">
         <option value="" selected>Select Province</option>
-        <template x-for="province in fetchData.provincesList">
+        <template x-for="province in provincesList">
           <option
             x-text="province.name"
             :value="JSON.stringify({name: province.name, districts: province.districts})"
@@ -44,12 +41,12 @@
       <select
         x-model="formData.city"
         class="border shadow-md w-52"
-        x-if="!formData.province"
+        x-if="!province"
       >
         <option value="" selected>Select City</option>
         <template
-          x-effect="fetchData.assignDistricts(formData.province)"
-          x-for="city in fetchData.citiesList"
+          x-effect="assignDistricts(province)"
+          x-for="city in citiesList"
         >
           <option x-text="city.name"></option>
         </template>
@@ -59,7 +56,7 @@
     <!--address-->
     <div class="flex justify-around">
       <span class="text-gray-800 w-20">Address</span>
-      <input x-model="formData.address" class="border shadow-md" />
+      <input x-model="address" class="border shadow-md" />
     </div>
     <!--address-->
     <button
@@ -76,43 +73,38 @@
 
   function data(country) {
     return {
-      fetchData: {
-        provincesList: [],
-        citiesList: [],
-
-        async fetchProvince() {
-          const data = await axios.get(url);
-          this.provincesList = data.data;
-        },
-        assignDistricts(province) {
-          if (!province.name) return;
-
-          this.citiesList = province.districts;
-        },
+      country,
+      province: {
+        name: "",
+        districts: [],
       },
-      formData: {
-        country,
-        province: {
-          name: "",
-          districts: [],
-        },
-        city: "",
-        address: "",
+      city: "",
+      address: "",
+      provincesList: [],
+      citiesList: [],
 
-        setProvince(event) {
-          const parsedProvince = JSON.parse(event.target.value);
+      async fetchProvince() {
+        const data = await axios.get(url);
+        this.provincesList = data.data;
+      },
+      assignDistricts(province) {
+        if (!province.name) return;
 
-          this.province.name = parsedProvince.name;
-          this.province.districts = parsedProvince.districts;
-        },
-        handleSubmitForm() {
-          console.log({
-            country: this.country,
-            province: this.province.name,
-            city: this.city,
-            address: this.address,
-          });
-        },
+        this.citiesList = province.districts;
+      },
+      setProvince(event) {
+        const parsedProvince = JSON.parse(event.target.value);
+
+        this.province.name = parsedProvince.name;
+        this.province.districts = parsedProvince.districts;
+      },
+      handleSubmitForm() {
+        console.log({
+          country: this.country,
+          province: this.province.name,
+          city: this.city,
+          address: this.address,
+        });
       },
     };
   }

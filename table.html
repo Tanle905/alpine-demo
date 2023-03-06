@@ -132,7 +132,7 @@
           ],
           columns: [
             {},
-            { data: (row) => `${row.id.name} ${row.id.value}`, width: "5%" },
+            { data: (row) => row.login.uuid, width: "5%" },
             { data: "email", width: "20%" },
             {
               data: (row) =>

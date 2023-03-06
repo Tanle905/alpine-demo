@@ -44,62 +44,49 @@
 <script src="https://cdn.datatables.net/select/1.6.1/js/dataTables.select.min.js"></script>
 <!--DataTable-->
 
-<button
-  type="button"
-  class="btn btn-primary"
-  data-toggle="modal"
-  data-target="#tableModal"
->
-  Open modal
-</button>
+<div x-data="data()">
+  <button type="button" class="btn btn-primary" @click="handleOpenModal">
+    Open modal
+  </button>
 
-<div
-  x-data="data"
-  class="modal fade"
-  id="tableModal"
-  tabindex="-1"
-  role="dialog"
-  aria-labelledby="tableModal"
-  aria-hidden="true"
->
-  <div class="modal-dialog modal-lg" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="tableModal">Jira Tickets</h5>
-        <button
-          type="button"
-          class="close"
-          data-dismiss="modal"
-          aria-label="Close"
-        ></button>
-      </div>
-      <div class="modal-body">
-        <table id="userTable" class="display" style="width: 100%">
-          <thead>
+  <div class="modal fade" tabindex="-1" role="dialog" id="tableModal">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title">Jira Tickets</h3>
+        </div>
+        <div class="modal-body">
+          <table id="userTable" class="display" style="width: 100%">
+            <thead>
+              <tr>
+                <th></th>
+                <th>ID</th>
+                <th>Email</th>
+                <th>Fullname</th>
+                <th>Age</th>
+              </tr>
+            </thead>
             <tr>
-              <th></th>
-              <th>ID</th>
-              <th>Email</th>
-              <th>Fullname</th>
-              <th>Age</th>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
             </tr>
-          </thead>
-          <tr>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-          </tr>
-        </table>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">
-          Close
-        </button>
-        <button type="button" class="btn btn-primary" @click="handleSubmit">
-          Save changes
-        </button>
+          </table>
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            @click="handleCloseModal"
+          >
+            Close
+          </button>
+          <button type="button" class="btn btn-primary" @click="handleSubmit">
+            Save changes
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -111,6 +98,7 @@
     return {
       users: [],
       table: null,
+      isOpen: false,
 
       async init() {
         await this.fetchUsers();
@@ -133,15 +121,25 @@
           columns: [
             {},
             { data: (row) => row.login.uuid, width: "5%" },
-            { data: "email", width: "20%" },
+            { data: "email", width: "10%" },
             {
               data: (row) =>
                 `${row.name.title}. ${row.name.first} ${row.name.last}`,
-              width: "50%",
+              width: "40%",
             },
             { data: (row) => row.dob.age, width: "20%" },
           ],
         });
+      },
+
+      handleOpenModal() {
+        $("#tableModal").modal("show");
+        this.isOpen = true;
+      },
+
+      handleCloseModal($ref) {
+        $("#tableModal").modal("hide");
+        this.isOpen = false;
       },
 
       async fetchUsers() {

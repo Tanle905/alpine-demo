@@ -1,0 +1,157 @@
+<!--Alpine.js-->
+<script src="//unpkg.com/alpinejs" defer></script>
+<!--Alpine.js-->
+<!--jQuery-->
+<script
+  src="https://code.jquery.com/jquery-3.6.3.js"
+  integrity="sha256-nQLuAZGRRcILA+6dMBOvcRh5Pe310sBpanc6+QBmyVM="
+  crossorigin="anonymous"
+></script>
+<!--jQuery-->
+<!--Bootstrap and poper.js-->
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css"
+  integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+  crossorigin="anonymous"
+/>
+<script
+  src="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/js/bootstrap.min.js"
+  integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+  crossorigin="anonymous"
+></script>
+<!--Bootstrap and poper.js-->
+<!--Select2-->
+<link
+  href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
+  rel="stylesheet"
+/>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<!--Select2-->
+<!--Axios-->
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<!--Axios-->
+<!--DataTable-->
+<link
+  href="https://cdn.datatables.net/1.13.3/css/jquery.dataTables.min.css"
+  rel="stylesheet"
+/>
+<link
+  href="https://cdn.datatables.net/select/1.6.1/css/select.dataTables.min.css"
+  rel="stylesheet"
+/>
+<script src="https://cdn.datatables.net/1.13.3/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/select/1.6.1/js/dataTables.select.min.js"></script>
+<!--DataTable-->
+
+<button
+  type="button"
+  class="btn btn-primary"
+  data-toggle="modal"
+  data-target="#tableModal"
+>
+  Open modal
+</button>
+
+<div
+  x-data="data"
+  class="modal fade"
+  id="tableModal"
+  tabindex="-1"
+  role="dialog"
+  aria-labelledby="tableModal"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="tableModal">Jira Tickets</h5>
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <table id="userTable" class="display" style="width: 100%">
+          <thead>
+            <tr>
+              <th></th>
+              <th>ID</th>
+              <th>Email</th>
+              <th>Fullname</th>
+              <th>Age</th>
+            </tr>
+          </thead>
+          <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+          Close
+        </button>
+        <button type="button" class="btn btn-primary" @click="handleSubmit">
+          Save changes
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  const url = "https://randomuser.me/api/?results=100";
+
+  function data() {
+    return {
+      users: [],
+      table: null,
+
+      async init() {
+        await this.fetchUsers();
+
+        this.table = new DataTable("#userTable", {
+          data: this.users,
+          select: {
+            items: "row",
+            style: "multi",
+          },
+          columnDefs: [
+            {
+              targets: 0,
+              data: null,
+              defaultContent: "",
+              orderable: false,
+              className: "select-checkbox",
+            },
+          ],
+          columns: [
+            {},
+            { data: (row) => `${row.id.name} ${row.id.value}`, width: "5%" },
+            { data: "email", width: "20%" },
+            {
+              data: (row) =>
+                `${row.name.title}. ${row.name.first} ${row.name.last}`,
+              width: "50%",
+            },
+            { data: (row) => row.dob.age, width: "20%" },
+          ],
+        });
+      },
+
+      async fetchUsers() {
+        const data = await axios.get(url);
+        this.users = data.data.results;
+      },
+
+      handleSubmit() {
+        const data = this.table.rows({ selected: true }).data();
+      },
+    };
+  }
+</script>

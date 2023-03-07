@@ -92,19 +92,37 @@
   </div>
 </div>
 <script>
-  const url = "https://randomuser.me/api/?results=100";
+  const url = "https://randomuser.me/api/";
 
   function data() {
     return {
-      users: [],
       table: null,
       isOpen: false,
 
-      async init() {
-        await this.fetchUsers();
-
+      init() {
         this.table = new DataTable("#userTable", {
-          data: this.users,
+          serverSide: true,
+          ajax: {
+            url,
+            data: (data) => {
+              console.log(data);
+              const pageSize = data.length;
+              const currentPage = data.start / pageSize + 1;
+              return {
+                page: currentPage,
+                results: pageSize,
+              };
+            },
+            dataFilter: (data) => {
+              const json = jQuery.parseJSON(data);
+
+              json.data = json.results ?? [];
+              json.recordsTotal = 100 ?? 0;
+              json.recordsFiltered = 100 ?? 0;
+
+              return JSON.stringify(json);
+            },
+          },
           select: {
             items: "row",
             style: "multi",
@@ -140,11 +158,6 @@
       handleCloseModal($ref) {
         $("#tableModal").modal("hide");
         this.isOpen = false;
-      },
-
-      async fetchUsers() {
-        const data = await axios.get(url);
-        this.users = data.data.results;
       },
 
       handleSubmit() {

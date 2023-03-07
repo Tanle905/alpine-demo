@@ -1,0 +1,181 @@
+<!--Alpine.js-->
+<script src="//unpkg.com/alpinejs" defer></script>
+<!--Alpine.js-->
+<!--jQuery-->
+<script
+  src="https://code.jquery.com/jquery-3.6.3.js"
+  integrity="sha256-nQLuAZGRRcILA+6dMBOvcRh5Pe310sBpanc6+QBmyVM="
+  crossorigin="anonymous"
+></script>
+<!--jQuery-->
+<!--Bootstrap and poper.js-->
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css"
+  integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+  crossorigin="anonymous"
+/>
+<script
+  src="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/js/bootstrap.min.js"
+  integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+  crossorigin="anonymous"
+></script>
+<!--Bootstrap and poper.js-->
+<!--Select2-->
+<link
+  href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
+  rel="stylesheet"
+/>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<!--Select2-->
+<!--Axios-->
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<!--Axios-->
+<!--DataTable-->
+<link
+  href="https://cdn.datatables.net/1.13.3/css/jquery.dataTables.min.css"
+  rel="stylesheet"
+/>
+<link
+  href="https://cdn.datatables.net/select/1.6.1/css/select.dataTables.min.css"
+  rel="stylesheet"
+/>
+<script src="https://cdn.datatables.net/1.13.3/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/select/1.6.1/js/dataTables.select.min.js"></script>
+<!--DataTable-->
+
+<div x-data="data()">
+  <button type="button" class="btn btn-primary" @click="handleOpenModal">
+    Open modal
+  </button>
+
+  <div class="modal fade" tabindex="-1" role="dialog" id="tableModal">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title">Jira Tickets</h3>
+        </div>
+        <div class="modal-body">
+          <table id="userTable" class="display" style="width: 100%">
+            <thead>
+              <tr>
+                <th></th>
+                <th>ID</th>
+                <th>Email</th>
+                <th>Fullname</th>
+                <th>Age</th>
+              </tr>
+            </thead>
+            <tr>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tfoot>
+              <tr>
+                <th colspan="4" style="text-align: right">Total hours:</th>
+                <th></th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            @click="handleCloseModal"
+          >
+            Close
+          </button>
+          <button type="button" class="btn btn-primary" @click="handleSubmit">
+            Save changes
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  const url = "https://randomuser.me/api/";
+
+  function data() {
+    return {
+      table: null,
+      isOpen: false,
+
+      init() {
+        this.table = new DataTable("#userTable", {
+          serverSide: true,
+          ajax: {
+            url,
+            data: (data) => {
+              const pageSize = data.length;
+              const currentPage = data.start / pageSize + 1;
+              return {
+                page: currentPage,
+                results: pageSize,
+              };
+            },
+            dataFilter: (data) => {
+              const json = jQuery.parseJSON(data);
+
+              json.data = json.results ?? [];
+              json.recordsTotal = 100 ?? 0;
+              json.recordsFiltered = 100 ?? 0;
+
+              return JSON.stringify(json);
+            },
+          },
+          select: {
+            items: "row",
+            style: "multi",
+          },
+          columnDefs: [
+            {
+              targets: 0,
+              data: null,
+              defaultContent: "",
+              orderable: false,
+              className: "select-checkbox",
+            },
+          ],
+          columns: [
+            {},
+            { data: (row) => row.login.uuid, width: "5%" },
+            { data: "email", width: "10%" },
+            {
+              data: (row) =>
+                `${row.name.title}. ${row.name.first} ${row.name.last}`,
+              width: "40%",
+            },
+            { data: (row) => row.dob.age, width: "20%" },
+          ],
+          footerCallback: (row, data, start, end, display) => {
+            $(this.table.column(0).footer()).html(
+              data.reduce((a, b) => {
+                return a + b.dob.age;
+              }, 0) / data.length
+            );
+          },
+        });
+      },
+
+      handleOpenModal() {
+        $("#tableModal").modal("show");
+        this.isOpen = true;
+      },
+
+      handleCloseModal($ref) {
+        $("#tableModal").modal("hide");
+        this.isOpen = false;
+      },
+
+      handleSubmit() {
+        const data = this.table.rows({ selected: true }).data();
+        console.log(data);
+      },
+    };
+  }
+</script>

@@ -73,6 +73,12 @@
               <td></td>
               <td></td>
             </tr>
+            <tfoot>
+              <tr>
+                <th colspan="4" style="text-align: right">Total hours:</th>
+                <th></th>
+              </tr>
+            </tfoot>
           </table>
         </div>
         <div class="modal-footer">
@@ -105,7 +111,6 @@
           ajax: {
             url,
             data: (data) => {
-              console.log(data);
               const pageSize = data.length;
               const currentPage = data.start / pageSize + 1;
               return {
@@ -147,6 +152,13 @@
             },
             { data: (row) => row.dob.age, width: "20%" },
           ],
+          footerCallback: (row, data, start, end, display) => {
+            $(this.table.column(0).footer()).html(
+              data.reduce((a, b) => {
+                return a + b.dob.age;
+              }, 0) / data.length
+            );
+          },
         });
       },
 

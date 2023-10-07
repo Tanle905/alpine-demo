@@ -1,0 +1,2383 @@
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!-- import CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/primevue@3.35.0/resources/themes/lara-light-blue/theme.css"
+    />
+    <!-- import JavaScript -->
+    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/primevue@3.35.0/core/core.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/primevue@3.35.0/inputswitch/inputswitch.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/primevue@3.35.0/datatable/datatable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/primevue@3.35.0/column/column.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/primevue@3.35.0/row/row.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/primevue@3.35.0/columngroup/columngroup.min.js"></script>
+  </head>
+
+  <body>
+    <div id="app" class="container h-screen mx-auto my-5">
+      <div class="space-y-2">
+        <div class="flex items-center space-x-2">
+          <p-input-switch v-model="isCompareToLastMonth"></p-input-switch>
+          <span>Is Compare To Last Month</span>
+        </div>
+        <p-datatable v-bind:="tableOptions">
+          <!--For displaying grouped column header-->
+          <p-column-group type="header">
+            <template v-for="column in columns">
+              <p-row>
+                <p-column v-bind:="column"></p-column>
+              </p-row>
+              <template v-if="column.children">
+                <p-row>
+                  <template v-for="child in column.children">
+                    <p-column v-bind:="child"></p-column>
+                  </template>
+                </p-row>
+              </template>
+            </template>
+          </p-column-group>
+          <template v-for="column in columns">
+            <!--For actual columns-->
+            <template
+              v-for="child in column.children ? column.children : [column]"
+            >
+              <p-column v-bind:="child"
+                ><template v-if="child.render" #body="{ data }">
+                  {{ child.render(data) }}
+                </template>
+                <template v-if="child.isEditable" #editor="{ data, field }">
+                  <p-input-number v-model="data[field]" /></template
+              ></p-column>
+            </template>
+          </template>
+          <template #expansion="slotProps">
+            <div class="p-3">
+              <p-datatable
+                v-bind:="smallerTableOptions"
+                v-model:editing-rows="smallerTableOptions.editingRows"
+                v-bind:value="slotProps.data[smallerTableOptions.dataName]"
+              >
+                <template v-for="column in smallerColumns">
+                  <p-column v-bind:="column"
+                    ><template v-if="column.render" #body="{ data }">
+                      {{ column.render(data) }}
+                    </template>
+                    <template
+                      v-if="column.isEditable"
+                      #editor="{ data, field }"
+                    >
+                      <p-input-number v-model="data[field]" /></template
+                  ></p-column>
+                </template>
+              </p-datatable>
+            </div>
+          </template>
+        </p-datatable>
+      </div>
+    </div>
+    <script>
+      const { createApp, ref, reactive, computed } = Vue;
+
+      const tableData = [
+        {
+          teamId: 221,
+          teamName: "khanhnguyen2",
+          teamLead: "Amruta Bajarang Jawale",
+          resourceAllocations: [
+            {
+              id: 3370,
+              customerID: 24,
+              customerName: "e-GoodManners (Aust) Pty Ltd",
+              reportingCodeID: 232,
+              reportingCodeName: "232 - tan tran",
+              projectTypeName: "Fixed Price Project",
+              projectTypeId: 1,
+              employeeAllocationStatus: null,
+              notes:
+                "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+              capacityWeeksGroup: [
+                {
+                  resourceAllocationId: 3370,
+                  capacityPercent: 0,
+                  week: 2,
+                },
+                {
+                  resourceAllocationId: 3370,
+                  capacityPercent: 0,
+                  week: 3,
+                },
+                {
+                  resourceAllocationId: 3370,
+                  capacityPercent: 0,
+                  week: 4,
+                },
+                {
+                  resourceAllocationId: 3370,
+                  capacityPercent: 15,
+                  week: 5,
+                },
+                {
+                  resourceAllocationId: 3370,
+                  capacityPercent: 22,
+                  week: 1,
+                },
+              ],
+              capacityWeeksGroupLastMonth: null,
+              actualDetail: [
+                {
+                  week: 1,
+                  percentage: 0,
+                },
+                {
+                  week: 2,
+                  percentage: 0,
+                },
+                {
+                  week: 3,
+                  percentage: 0,
+                },
+                {
+                  week: 4,
+                  percentage: 0,
+                },
+                {
+                  week: 5,
+                  percentage: 0,
+                },
+              ],
+              actualDetailLastMonth: null,
+            },
+            {
+              id: 3369,
+              customerID: 24,
+              customerName: "e-GoodManners (Aust) Pty Ltd",
+              reportingCodeID: 235,
+              reportingCodeName: "235 - tan tran create",
+              projectTypeName: "Fixed Price Project",
+              projectTypeId: 1,
+              employeeAllocationStatus: null,
+              notes: "",
+              capacityWeeksGroup: [
+                {
+                  resourceAllocationId: 3369,
+                  capacityPercent: 0,
+                  week: 3,
+                },
+                {
+                  resourceAllocationId: 3369,
+                  capacityPercent: 0,
+                  week: 4,
+                },
+                {
+                  resourceAllocationId: 3369,
+                  capacityPercent: 0,
+                  week: 5,
+                },
+                {
+                  resourceAllocationId: 3369,
+                  capacityPercent: 77,
+                  week: 1,
+                },
+                {
+                  resourceAllocationId: 3369,
+                  capacityPercent: 99,
+                  week: 2,
+                },
+              ],
+              capacityWeeksGroupLastMonth: null,
+              actualDetail: [
+                {
+                  week: 1,
+                  percentage: 0,
+                },
+                {
+                  week: 2,
+                  percentage: 0,
+                },
+                {
+                  week: 3,
+                  percentage: 0,
+                },
+                {
+                  week: 4,
+                  percentage: 0,
+                },
+                {
+                  week: 5,
+                  percentage: 0,
+                },
+              ],
+              actualDetailLastMonth: null,
+            },
+          ],
+          userID: "16637711-A3F3-4C2D-4BED-08D9403778A7",
+          fullName: "Amruta Bajarang Jawale",
+          empTypeName: "Unassigned",
+          positionID: 53,
+          positionName: "Analytics / BI",
+          officeId: null,
+          officeName: null,
+          capacityWeeks: [
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 99,
+              week: 2,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 0,
+              week: 3,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 0,
+              week: 4,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 15,
+              week: 5,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 99,
+              week: 1,
+            },
+          ],
+          capacityWeeksLastMonth: null,
+          actuals: [
+            {
+              week: 1,
+              percentage: 0,
+            },
+            {
+              week: 2,
+              percentage: 0,
+            },
+            {
+              week: 3,
+              percentage: 0,
+            },
+            {
+              week: 4,
+              percentage: 0,
+            },
+            {
+              week: 5,
+              percentage: 0,
+            },
+          ],
+          actualsLastMonth: null,
+        },
+        {
+          teamId: 293,
+          teamName: "Braver",
+          teamLead: "Tuan Nguyen",
+          resourceAllocations: [
+            {
+              id: 3486,
+              customerID: 24,
+              customerName: "e-GoodManners (Aust) Pty Ltd",
+              reportingCodeID: 232,
+              reportingCodeName: "232 - tan tran",
+              projectTypeName: "Fixed Price Project",
+              projectTypeId: 1,
+              employeeAllocationStatus: null,
+              notes: null,
+              capacityWeeksGroup: [
+                {
+                  resourceAllocationId: 3486,
+                  capacityPercent: 0,
+                  week: 2,
+                },
+                {
+                  resourceAllocationId: 3486,
+                  capacityPercent: 0,
+                  week: 3,
+                },
+                {
+                  resourceAllocationId: 3486,
+                  capacityPercent: 0,
+                  week: 4,
+                },
+                {
+                  resourceAllocationId: 3486,
+                  capacityPercent: 0,
+                  week: 5,
+                },
+                {
+                  resourceAllocationId: 3486,
+                  capacityPercent: 100,
+                  week: 1,
+                },
+              ],
+              capacityWeeksGroupLastMonth: null,
+              actualDetail: [
+                {
+                  week: 1,
+                  percentage: 0,
+                },
+                {
+                  week: 2,
+                  percentage: 0,
+                },
+                {
+                  week: 3,
+                  percentage: 0,
+                },
+                {
+                  week: 4,
+                  percentage: 0,
+                },
+                {
+                  week: 5,
+                  percentage: 0,
+                },
+              ],
+              actualDetailLastMonth: null,
+            },
+          ],
+          userID: "3B4F024B-3B68-49FA-D5E1-08DA54362DE1",
+          fullName: "Binh Huynh",
+          empTypeName: "Unassigned",
+          positionID: 0,
+          positionName: null,
+          officeId: 2,
+          officeName: "Saigon",
+          capacityWeeks: [
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 0,
+              week: 2,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 0,
+              week: 3,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 0,
+              week: 4,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 0,
+              week: 5,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 100,
+              week: 1,
+            },
+          ],
+          capacityWeeksLastMonth: null,
+          actuals: [
+            {
+              week: 1,
+              percentage: 0,
+            },
+            {
+              week: 2,
+              percentage: 0,
+            },
+            {
+              week: 3,
+              percentage: 0,
+            },
+            {
+              week: 4,
+              percentage: 0,
+            },
+            {
+              week: 5,
+              percentage: 0,
+            },
+          ],
+          actualsLastMonth: null,
+        },
+        {
+          teamId: 293,
+          teamName: "Braver",
+          teamLead: "Tuan Nguyen",
+          resourceAllocations: [
+            {
+              id: 3427,
+              customerID: 24,
+              customerName: "e-GoodManners (Aust) Pty Ltd",
+              reportingCodeID: 232,
+              reportingCodeName: "232 - tan tran",
+              projectTypeName: "Fixed Price Project",
+              projectTypeId: 1,
+              employeeAllocationStatus: null,
+              notes: "nay tu add",
+              capacityWeeksGroup: [
+                {
+                  resourceAllocationId: 3427,
+                  capacityPercent: 0,
+                  week: 1,
+                },
+                {
+                  resourceAllocationId: 3427,
+                  capacityPercent: 0,
+                  week: 2,
+                },
+                {
+                  resourceAllocationId: 3427,
+                  capacityPercent: 0,
+                  week: 3,
+                },
+                {
+                  resourceAllocationId: 3427,
+                  capacityPercent: 0,
+                  week: 4,
+                },
+                {
+                  resourceAllocationId: 3427,
+                  capacityPercent: 0,
+                  week: 5,
+                },
+              ],
+              capacityWeeksGroupLastMonth: null,
+              actualDetail: [
+                {
+                  week: 1,
+                  percentage: 0,
+                },
+                {
+                  week: 2,
+                  percentage: 0,
+                },
+                {
+                  week: 3,
+                  percentage: 0,
+                },
+                {
+                  week: 4,
+                  percentage: 0,
+                },
+                {
+                  week: 5,
+                  percentage: 0,
+                },
+              ],
+              actualDetailLastMonth: null,
+            },
+            {
+              id: 3433,
+              customerID: 24,
+              customerName: "e-GoodManners (Aust) Pty Ltd",
+              reportingCodeID: 242,
+              reportingCodeName: "242 - Victor Test1",
+              projectTypeName: "Fixed Price Project",
+              projectTypeId: 1,
+              employeeAllocationStatus: null,
+              notes: "",
+              capacityWeeksGroup: [
+                {
+                  resourceAllocationId: 3433,
+                  capacityPercent: 0,
+                  week: 2,
+                },
+                {
+                  resourceAllocationId: 3433,
+                  capacityPercent: 0,
+                  week: 3,
+                },
+                {
+                  resourceAllocationId: 3433,
+                  capacityPercent: 0,
+                  week: 4,
+                },
+                {
+                  resourceAllocationId: 3433,
+                  capacityPercent: 0,
+                  week: 5,
+                },
+                {
+                  resourceAllocationId: 3433,
+                  capacityPercent: 7777,
+                  week: 1,
+                },
+              ],
+              capacityWeeksGroupLastMonth: null,
+              actualDetail: [
+                {
+                  week: 1,
+                  percentage: 0,
+                },
+                {
+                  week: 2,
+                  percentage: 0,
+                },
+                {
+                  week: 3,
+                  percentage: 0,
+                },
+                {
+                  week: 4,
+                  percentage: 0,
+                },
+                {
+                  week: 5,
+                  percentage: 0,
+                },
+              ],
+              actualDetailLastMonth: null,
+            },
+            {
+              id: 3472,
+              customerID: 28,
+              customerName: "Gymwise Pty Ltd",
+              reportingCodeID: 44,
+              reportingCodeName: "032 - Gymwise Support",
+              projectTypeName: "Fixed Price Project",
+              projectTypeId: 1,
+              employeeAllocationStatus: null,
+              notes: "",
+              capacityWeeksGroup: [
+                {
+                  resourceAllocationId: 3472,
+                  capacityPercent: 0,
+                  week: 4,
+                },
+                {
+                  resourceAllocationId: 3472,
+                  capacityPercent: 0,
+                  week: 5,
+                },
+                {
+                  resourceAllocationId: 3472,
+                  capacityPercent: 12,
+                  week: 1,
+                },
+                {
+                  resourceAllocationId: 3472,
+                  capacityPercent: 12,
+                  week: 2,
+                },
+                {
+                  resourceAllocationId: 3472,
+                  capacityPercent: 12,
+                  week: 3,
+                },
+              ],
+              capacityWeeksGroupLastMonth: null,
+              actualDetail: [
+                {
+                  week: 1,
+                  percentage: 0,
+                },
+                {
+                  week: 2,
+                  percentage: 0,
+                },
+                {
+                  week: 3,
+                  percentage: 0,
+                },
+                {
+                  week: 4,
+                  percentage: 0,
+                },
+                {
+                  week: 5,
+                  percentage: 0,
+                },
+              ],
+              actualDetailLastMonth: null,
+            },
+            {
+              id: 3431,
+              customerID: 146,
+              customerName: "Scarlet",
+              reportingCodeID: 254,
+              reportingCodeName: "254 - Scarlet reporting codeeeeee",
+              projectTypeName: "Maintenance & Support",
+              projectTypeId: 3,
+              employeeAllocationStatus: null,
+              notes: "",
+              capacityWeeksGroup: [
+                {
+                  resourceAllocationId: 3431,
+                  capacityPercent: 0,
+                  week: 1,
+                },
+                {
+                  resourceAllocationId: 3431,
+                  capacityPercent: 0,
+                  week: 2,
+                },
+                {
+                  resourceAllocationId: 3431,
+                  capacityPercent: 0,
+                  week: 3,
+                },
+                {
+                  resourceAllocationId: 3431,
+                  capacityPercent: 0,
+                  week: 4,
+                },
+                {
+                  resourceAllocationId: 3431,
+                  capacityPercent: 200,
+                  week: 5,
+                },
+              ],
+              capacityWeeksGroupLastMonth: null,
+              actualDetail: [
+                {
+                  week: 1,
+                  percentage: 0,
+                },
+                {
+                  week: 2,
+                  percentage: 0,
+                },
+                {
+                  week: 3,
+                  percentage: 0,
+                },
+                {
+                  week: 4,
+                  percentage: 0,
+                },
+                {
+                  week: 5,
+                  percentage: 0,
+                },
+              ],
+              actualDetailLastMonth: null,
+            },
+            {
+              id: 3430,
+              customerID: 146,
+              customerName: "Scarlet",
+              reportingCodeID: 260,
+              reportingCodeName: "260 - Scarlet reporting code 1",
+              projectTypeName: "Fixed Price Project",
+              projectTypeId: 1,
+              employeeAllocationStatus: null,
+              notes: "",
+              capacityWeeksGroup: [
+                {
+                  resourceAllocationId: 3430,
+                  capacityPercent: 0,
+                  week: 1,
+                },
+                {
+                  resourceAllocationId: 3430,
+                  capacityPercent: 0,
+                  week: 3,
+                },
+                {
+                  resourceAllocationId: 3430,
+                  capacityPercent: 0,
+                  week: 4,
+                },
+                {
+                  resourceAllocationId: 3430,
+                  capacityPercent: 0,
+                  week: 5,
+                },
+                {
+                  resourceAllocationId: 3430,
+                  capacityPercent: 100,
+                  week: 2,
+                },
+              ],
+              capacityWeeksGroupLastMonth: null,
+              actualDetail: [
+                {
+                  week: 1,
+                  percentage: 0,
+                },
+                {
+                  week: 2,
+                  percentage: 0,
+                },
+                {
+                  week: 3,
+                  percentage: 0,
+                },
+                {
+                  week: 4,
+                  percentage: 0,
+                },
+                {
+                  week: 5,
+                  percentage: 0,
+                },
+              ],
+              actualDetailLastMonth: null,
+            },
+          ],
+          userID: "0959BC35-6FE2-4233-BCE0-08DB40A08A9D",
+          fullName: "Chang lead",
+          empTypeName: "Part-Time",
+          positionID: 45,
+          positionName: "QA Lead",
+          officeId: 2,
+          officeName: "Saigon",
+          capacityWeeks: [
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 7789,
+              week: 1,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 112,
+              week: 2,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 12,
+              week: 3,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 0,
+              week: 4,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 200,
+              week: 5,
+            },
+          ],
+          capacityWeeksLastMonth: null,
+          actuals: [
+            {
+              week: 1,
+              percentage: 0,
+            },
+            {
+              week: 2,
+              percentage: 0,
+            },
+            {
+              week: 3,
+              percentage: 0,
+            },
+            {
+              week: 4,
+              percentage: 0,
+            },
+            {
+              week: 5,
+              percentage: 0,
+            },
+          ],
+          actualsLastMonth: null,
+        },
+        {
+          teamId: 286,
+          teamName: "Scarlet Teams",
+          teamLead: "Chang lead",
+          resourceAllocations: [
+            {
+              id: 3400,
+              customerID: 24,
+              customerName: "e-GoodManners (Aust) Pty Ltd",
+              reportingCodeID: 232,
+              reportingCodeName: "232 - tan tran",
+              projectTypeName: "Fixed Price Project",
+              projectTypeId: 1,
+              employeeAllocationStatus: null,
+              notes: null,
+              capacityWeeksGroup: [
+                {
+                  resourceAllocationId: 3400,
+                  capacityPercent: 0,
+                  week: 2,
+                },
+                {
+                  resourceAllocationId: 3400,
+                  capacityPercent: 0,
+                  week: 3,
+                },
+                {
+                  resourceAllocationId: 3400,
+                  capacityPercent: 0,
+                  week: 4,
+                },
+                {
+                  resourceAllocationId: 3400,
+                  capacityPercent: 0,
+                  week: 5,
+                },
+                {
+                  resourceAllocationId: 3400,
+                  capacityPercent: 100,
+                  week: 1,
+                },
+              ],
+              capacityWeeksGroupLastMonth: null,
+              actualDetail: [
+                {
+                  week: 1,
+                  percentage: 0,
+                },
+                {
+                  week: 2,
+                  percentage: 0,
+                },
+                {
+                  week: 3,
+                  percentage: 0,
+                },
+                {
+                  week: 4,
+                  percentage: 0,
+                },
+                {
+                  week: 5,
+                  percentage: 0,
+                },
+              ],
+              actualDetailLastMonth: null,
+            },
+            {
+              id: 3371,
+              customerID: 24,
+              customerName: "e-GoodManners (Aust) Pty Ltd",
+              reportingCodeID: 232,
+              reportingCodeName: "232 - tan tran",
+              projectTypeName: "Fixed Price Project",
+              projectTypeId: 1,
+              employeeAllocationStatus: null,
+              notes: "",
+              capacityWeeksGroup: [
+                {
+                  resourceAllocationId: 3371,
+                  capacityPercent: 0,
+                  week: 1,
+                },
+                {
+                  resourceAllocationId: 3371,
+                  capacityPercent: 0,
+                  week: 2,
+                },
+                {
+                  resourceAllocationId: 3371,
+                  capacityPercent: 0,
+                  week: 4,
+                },
+                {
+                  resourceAllocationId: 3371,
+                  capacityPercent: 0,
+                  week: 5,
+                },
+                {
+                  resourceAllocationId: 3371,
+                  capacityPercent: 100,
+                  week: 3,
+                },
+              ],
+              capacityWeeksGroupLastMonth: null,
+              actualDetail: [
+                {
+                  week: 1,
+                  percentage: 0,
+                },
+                {
+                  week: 2,
+                  percentage: 0,
+                },
+                {
+                  week: 3,
+                  percentage: 0,
+                },
+                {
+                  week: 4,
+                  percentage: 0,
+                },
+                {
+                  week: 5,
+                  percentage: 0,
+                },
+              ],
+              actualDetailLastMonth: null,
+            },
+          ],
+          userID: "786B9CD9-CFC3-4D91-BCDF-08DB40A08A9D",
+          fullName: "chang member",
+          empTypeName: "Part-Time",
+          positionID: 12,
+          positionName: "Design",
+          officeId: 2,
+          officeName: "Saigon",
+          capacityWeeks: [
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 0,
+              week: 2,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 100,
+              week: 3,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 0,
+              week: 4,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 0,
+              week: 5,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 100,
+              week: 1,
+            },
+          ],
+          capacityWeeksLastMonth: null,
+          actuals: [
+            {
+              week: 1,
+              percentage: 0,
+            },
+            {
+              week: 2,
+              percentage: 0,
+            },
+            {
+              week: 3,
+              percentage: 0,
+            },
+            {
+              week: 4,
+              percentage: 0,
+            },
+            {
+              week: 5,
+              percentage: 0,
+            },
+          ],
+          actualsLastMonth: null,
+        },
+        {
+          teamId: 293,
+          teamName: "Braver",
+          teamLead: "Tuan Nguyen",
+          resourceAllocations: [
+            {
+              id: 3485,
+              customerID: 24,
+              customerName: "e-GoodManners (Aust) Pty Ltd",
+              reportingCodeID: 232,
+              reportingCodeName: "232 - tan tran",
+              projectTypeName: "Fixed Price Project",
+              projectTypeId: 1,
+              employeeAllocationStatus: null,
+              notes: null,
+              capacityWeeksGroup: [
+                {
+                  resourceAllocationId: 3485,
+                  capacityPercent: 0,
+                  week: 2,
+                },
+                {
+                  resourceAllocationId: 3485,
+                  capacityPercent: 0,
+                  week: 3,
+                },
+                {
+                  resourceAllocationId: 3485,
+                  capacityPercent: 0,
+                  week: 4,
+                },
+                {
+                  resourceAllocationId: 3485,
+                  capacityPercent: 0,
+                  week: 5,
+                },
+                {
+                  resourceAllocationId: 3485,
+                  capacityPercent: 90,
+                  week: 1,
+                },
+              ],
+              capacityWeeksGroupLastMonth: null,
+              actualDetail: [
+                {
+                  week: 1,
+                  percentage: 0,
+                },
+                {
+                  week: 2,
+                  percentage: 0,
+                },
+                {
+                  week: 3,
+                  percentage: 0,
+                },
+                {
+                  week: 4,
+                  percentage: 0,
+                },
+                {
+                  week: 5,
+                  percentage: 0,
+                },
+              ],
+              actualDetailLastMonth: null,
+            },
+          ],
+          userID: "B2CEFA8F-E3F6-4233-1996-08D94295B6FB",
+          fullName: "Darius Nguyen",
+          empTypeName: "Unassigned",
+          positionID: 18,
+          positionName: "Developer",
+          officeId: 2,
+          officeName: "Saigon",
+          capacityWeeks: [
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 0,
+              week: 2,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 0,
+              week: 3,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 0,
+              week: 4,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 0,
+              week: 5,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 90,
+              week: 1,
+            },
+          ],
+          capacityWeeksLastMonth: null,
+          actuals: [
+            {
+              week: 1,
+              percentage: 0,
+            },
+            {
+              week: 2,
+              percentage: 0,
+            },
+            {
+              week: 3,
+              percentage: 0,
+            },
+            {
+              week: 4,
+              percentage: 0,
+            },
+            {
+              week: 5,
+              percentage: 0,
+            },
+          ],
+          actualsLastMonth: null,
+        },
+        {
+          teamId: 286,
+          teamName: "Scarlet Teams",
+          teamLead: "Chang lead",
+          resourceAllocations: [
+            {
+              id: 3293,
+              customerID: 34,
+              customerName: "Marque Group Holdings Pty Ltd",
+              reportingCodeID: 50,
+              reportingCodeName: "038 - Dashboard BI Support",
+              projectTypeName: "Fixed Price Project",
+              projectTypeId: 1,
+              employeeAllocationStatus: null,
+              notes: null,
+              capacityWeeksGroup: [
+                {
+                  resourceAllocationId: 3293,
+                  capacityPercent: 0,
+                  week: 1,
+                },
+                {
+                  resourceAllocationId: 3293,
+                  capacityPercent: 0,
+                  week: 2,
+                },
+                {
+                  resourceAllocationId: 3293,
+                  capacityPercent: 0,
+                  week: 3,
+                },
+                {
+                  resourceAllocationId: 3293,
+                  capacityPercent: 0,
+                  week: 4,
+                },
+                {
+                  resourceAllocationId: 3293,
+                  capacityPercent: 0,
+                  week: 5,
+                },
+              ],
+              capacityWeeksGroupLastMonth: null,
+              actualDetail: [
+                {
+                  week: 1,
+                  percentage: 0,
+                },
+                {
+                  week: 2,
+                  percentage: 0,
+                },
+                {
+                  week: 3,
+                  percentage: 0,
+                },
+                {
+                  week: 4,
+                  percentage: 0,
+                },
+                {
+                  week: 5,
+                  percentage: 0,
+                },
+              ],
+              actualDetailLastMonth: null,
+            },
+          ],
+          userID: "8206461E-D215-446B-8298-0557F039AB80",
+          fullName: "Hemant Makwana",
+          empTypeName: "Intern",
+          positionID: 50,
+          positionName: "Unassigned",
+          officeId: 2,
+          officeName: "Saigon",
+          capacityWeeks: [
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 0,
+              week: 1,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 0,
+              week: 2,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 0,
+              week: 3,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 0,
+              week: 4,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 0,
+              week: 5,
+            },
+          ],
+          capacityWeeksLastMonth: null,
+          actuals: [
+            {
+              week: 1,
+              percentage: 0,
+            },
+            {
+              week: 2,
+              percentage: 0,
+            },
+            {
+              week: 3,
+              percentage: 0,
+            },
+            {
+              week: 4,
+              percentage: 0,
+            },
+            {
+              week: 5,
+              percentage: 0,
+            },
+          ],
+          actualsLastMonth: null,
+        },
+        {
+          teamId: 166,
+          teamName: "Gabriel Q",
+          teamLead: "AbdulRehman Sayyed",
+          resourceAllocations: [
+            {
+              id: 3117,
+              customerID: 24,
+              customerName: "e-GoodManners (Aust) Pty Ltd",
+              reportingCodeID: 235,
+              reportingCodeName: "235 - tan tran create",
+              projectTypeName: "Fixed Price Project",
+              projectTypeId: 1,
+              employeeAllocationStatus: null,
+              notes: "jd",
+              capacityWeeksGroup: [
+                {
+                  resourceAllocationId: 3117,
+                  capacityPercent: 0,
+                  week: 1,
+                },
+                {
+                  resourceAllocationId: 3117,
+                  capacityPercent: 0,
+                  week: 2,
+                },
+                {
+                  resourceAllocationId: 3117,
+                  capacityPercent: 0,
+                  week: 4,
+                },
+                {
+                  resourceAllocationId: 3117,
+                  capacityPercent: 0,
+                  week: 5,
+                },
+                {
+                  resourceAllocationId: 3117,
+                  capacityPercent: 10,
+                  week: 3,
+                },
+              ],
+              capacityWeeksGroupLastMonth: null,
+              actualDetail: [
+                {
+                  week: 1,
+                  percentage: 0,
+                },
+                {
+                  week: 2,
+                  percentage: 0,
+                },
+                {
+                  week: 3,
+                  percentage: 0,
+                },
+                {
+                  week: 4,
+                  percentage: 0,
+                },
+                {
+                  week: 5,
+                  percentage: 0,
+                },
+              ],
+              actualDetailLastMonth: null,
+            },
+          ],
+          userID: "92DB9E5B-6ECA-4C2C-4BEA-08D9403778A7",
+          fullName: "Jack Diep",
+          empTypeName: "Full-Time",
+          positionID: 12,
+          positionName: "Design",
+          officeId: 2,
+          officeName: "Saigon",
+          capacityWeeks: [
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 0,
+              week: 1,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 0,
+              week: 2,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 0,
+              week: 4,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 0,
+              week: 5,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 10,
+              week: 3,
+            },
+          ],
+          capacityWeeksLastMonth: null,
+          actuals: [
+            {
+              week: 1,
+              percentage: 0,
+            },
+            {
+              week: 2,
+              percentage: 0,
+            },
+            {
+              week: 3,
+              percentage: 0,
+            },
+            {
+              week: 4,
+              percentage: 0,
+            },
+            {
+              week: 5,
+              percentage: 0,
+            },
+          ],
+          actualsLastMonth: null,
+        },
+        {
+          teamId: 286,
+          teamName: "Scarlet Teams",
+          teamLead: "Chang lead",
+          resourceAllocations: [
+            {
+              id: 3368,
+              customerID: 24,
+              customerName: "e-GoodManners (Aust) Pty Ltd",
+              reportingCodeID: 235,
+              reportingCodeName: "235 - tan tran create",
+              projectTypeName: "Fixed Price Project",
+              projectTypeId: 1,
+              employeeAllocationStatus: null,
+              notes: "",
+              capacityWeeksGroup: [
+                {
+                  resourceAllocationId: 3368,
+                  capacityPercent: 0,
+                  week: 1,
+                },
+                {
+                  resourceAllocationId: 3368,
+                  capacityPercent: 0,
+                  week: 2,
+                },
+                {
+                  resourceAllocationId: 3368,
+                  capacityPercent: 0,
+                  week: 3,
+                },
+                {
+                  resourceAllocationId: 3368,
+                  capacityPercent: 0,
+                  week: 4,
+                },
+                {
+                  resourceAllocationId: 3368,
+                  capacityPercent: 10,
+                  week: 5,
+                },
+              ],
+              capacityWeeksGroupLastMonth: null,
+              actualDetail: [
+                {
+                  week: 1,
+                  percentage: 0,
+                },
+                {
+                  week: 2,
+                  percentage: 0,
+                },
+                {
+                  week: 3,
+                  percentage: 0,
+                },
+                {
+                  week: 4,
+                  percentage: 0,
+                },
+                {
+                  week: 5,
+                  percentage: 0,
+                },
+              ],
+              actualDetailLastMonth: null,
+            },
+          ],
+          userID: "7495EA06-3211-46AB-4BEB-08D9403778A7",
+          fullName: "Nilesh Lorem Sapra",
+          empTypeName: "Unassigned",
+          positionID: 20,
+          positionName: "Developer - Junior",
+          officeId: 2,
+          officeName: "Saigon",
+          capacityWeeks: [
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 0,
+              week: 1,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 0,
+              week: 2,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 0,
+              week: 3,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 0,
+              week: 4,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 10,
+              week: 5,
+            },
+          ],
+          capacityWeeksLastMonth: null,
+          actuals: [
+            {
+              week: 1,
+              percentage: 0,
+            },
+            {
+              week: 2,
+              percentage: 0,
+            },
+            {
+              week: 3,
+              percentage: 0,
+            },
+            {
+              week: 4,
+              percentage: 0,
+            },
+            {
+              week: 5,
+              percentage: 0,
+            },
+          ],
+          actualsLastMonth: null,
+        },
+        {
+          teamId: 286,
+          teamName: "Scarlet Teams",
+          teamLead: "Chang lead",
+          resourceAllocations: [
+            {
+              id: 3374,
+              customerID: 24,
+              customerName: "e-GoodManners (Aust) Pty Ltd",
+              reportingCodeID: 232,
+              reportingCodeName: "232 - tan tran",
+              projectTypeName: "Fixed Price Project",
+              projectTypeId: 1,
+              employeeAllocationStatus: null,
+              notes: "",
+              capacityWeeksGroup: [
+                {
+                  resourceAllocationId: 3374,
+                  capacityPercent: 0,
+                  week: 2,
+                },
+                {
+                  resourceAllocationId: 3374,
+                  capacityPercent: 0,
+                  week: 3,
+                },
+                {
+                  resourceAllocationId: 3374,
+                  capacityPercent: 0,
+                  week: 5,
+                },
+                {
+                  resourceAllocationId: 3374,
+                  capacityPercent: 3,
+                  week: 1,
+                },
+                {
+                  resourceAllocationId: 3374,
+                  capacityPercent: 5252,
+                  week: 4,
+                },
+              ],
+              capacityWeeksGroupLastMonth: null,
+              actualDetail: [
+                {
+                  week: 1,
+                  percentage: 0,
+                },
+                {
+                  week: 2,
+                  percentage: 0,
+                },
+                {
+                  week: 3,
+                  percentage: 0,
+                },
+                {
+                  week: 4,
+                  percentage: 0,
+                },
+                {
+                  week: 5,
+                  percentage: 0,
+                },
+              ],
+              actualDetailLastMonth: null,
+            },
+            {
+              id: 3372,
+              customerID: 24,
+              customerName: "e-GoodManners (Aust) Pty Ltd",
+              reportingCodeID: 235,
+              reportingCodeName: "235 - tan tran create",
+              projectTypeName: "Fixed Price Project",
+              projectTypeId: 1,
+              employeeAllocationStatus: null,
+              notes: "",
+              capacityWeeksGroup: [
+                {
+                  resourceAllocationId: 3372,
+                  capacityPercent: 0,
+                  week: 3,
+                },
+                {
+                  resourceAllocationId: 3372,
+                  capacityPercent: 0,
+                  week: 4,
+                },
+                {
+                  resourceAllocationId: 3372,
+                  capacityPercent: 0,
+                  week: 5,
+                },
+                {
+                  resourceAllocationId: 3372,
+                  capacityPercent: 20,
+                  week: 1,
+                },
+                {
+                  resourceAllocationId: 3372,
+                  capacityPercent: 35,
+                  week: 2,
+                },
+              ],
+              capacityWeeksGroupLastMonth: null,
+              actualDetail: [
+                {
+                  week: 1,
+                  percentage: 0,
+                },
+                {
+                  week: 2,
+                  percentage: 0,
+                },
+                {
+                  week: 3,
+                  percentage: 0,
+                },
+                {
+                  week: 4,
+                  percentage: 0,
+                },
+                {
+                  week: 5,
+                  percentage: 0,
+                },
+              ],
+              actualDetailLastMonth: null,
+            },
+            {
+              id: 3399,
+              customerID: 24,
+              customerName: "e-GoodManners (Aust) Pty Ltd",
+              reportingCodeID: 242,
+              reportingCodeName: "242 - Victor Test1",
+              projectTypeName: "Fixed Price Project",
+              projectTypeId: 1,
+              employeeAllocationStatus: null,
+              notes: "",
+              capacityWeeksGroup: [
+                {
+                  resourceAllocationId: 3399,
+                  capacityPercent: 0,
+                  week: 1,
+                },
+                {
+                  resourceAllocationId: 3399,
+                  capacityPercent: 0,
+                  week: 2,
+                },
+                {
+                  resourceAllocationId: 3399,
+                  capacityPercent: 0,
+                  week: 4,
+                },
+                {
+                  resourceAllocationId: 3399,
+                  capacityPercent: 0,
+                  week: 5,
+                },
+                {
+                  resourceAllocationId: 3399,
+                  capacityPercent: 1000,
+                  week: 3,
+                },
+              ],
+              capacityWeeksGroupLastMonth: null,
+              actualDetail: [
+                {
+                  week: 1,
+                  percentage: 0,
+                },
+                {
+                  week: 2,
+                  percentage: 0,
+                },
+                {
+                  week: 3,
+                  percentage: 0,
+                },
+                {
+                  week: 4,
+                  percentage: 0,
+                },
+                {
+                  week: 5,
+                  percentage: 0,
+                },
+              ],
+              actualDetailLastMonth: null,
+            },
+            {
+              id: 3392,
+              customerID: 24,
+              customerName: "e-GoodManners (Aust) Pty Ltd",
+              reportingCodeID: 244,
+              reportingCodeName: "244 - Admin Test",
+              projectTypeName: "Fixed Price Project",
+              projectTypeId: 1,
+              employeeAllocationStatus: null,
+              notes: "",
+              capacityWeeksGroup: [
+                {
+                  resourceAllocationId: 3392,
+                  capacityPercent: 0,
+                  week: 1,
+                },
+                {
+                  resourceAllocationId: 3392,
+                  capacityPercent: 0,
+                  week: 3,
+                },
+                {
+                  resourceAllocationId: 3392,
+                  capacityPercent: 0,
+                  week: 4,
+                },
+                {
+                  resourceAllocationId: 3392,
+                  capacityPercent: 0,
+                  week: 5,
+                },
+                {
+                  resourceAllocationId: 3392,
+                  capacityPercent: 100,
+                  week: 2,
+                },
+              ],
+              capacityWeeksGroupLastMonth: null,
+              actualDetail: [
+                {
+                  week: 1,
+                  percentage: 0,
+                },
+                {
+                  week: 2,
+                  percentage: 0,
+                },
+                {
+                  week: 3,
+                  percentage: 0,
+                },
+                {
+                  week: 4,
+                  percentage: 0,
+                },
+                {
+                  week: 5,
+                  percentage: 0,
+                },
+              ],
+              actualDetailLastMonth: null,
+            },
+            {
+              id: 3441,
+              customerID: 146,
+              customerName: "Scarlet",
+              reportingCodeID: 254,
+              reportingCodeName: "254 - Scarlet reporting codeeeeee",
+              projectTypeName: "Maintenance & Support",
+              projectTypeId: 3,
+              employeeAllocationStatus: null,
+              notes: "",
+              capacityWeeksGroup: [
+                {
+                  resourceAllocationId: 3441,
+                  capacityPercent: 0,
+                  week: 2,
+                },
+                {
+                  resourceAllocationId: 3441,
+                  capacityPercent: 0,
+                  week: 3,
+                },
+                {
+                  resourceAllocationId: 3441,
+                  capacityPercent: 0,
+                  week: 4,
+                },
+                {
+                  resourceAllocationId: 3441,
+                  capacityPercent: 0,
+                  week: 5,
+                },
+                {
+                  resourceAllocationId: 3441,
+                  capacityPercent: 700,
+                  week: 1,
+                },
+              ],
+              capacityWeeksGroupLastMonth: null,
+              actualDetail: [
+                {
+                  week: 1,
+                  percentage: 0,
+                },
+                {
+                  week: 2,
+                  percentage: 0,
+                },
+                {
+                  week: 3,
+                  percentage: 0,
+                },
+                {
+                  week: 4,
+                  percentage: 0,
+                },
+                {
+                  week: 5,
+                  percentage: 0,
+                },
+              ],
+              actualDetailLastMonth: null,
+            },
+            {
+              id: 3393,
+              customerID: 146,
+              customerName: "Scarlet",
+              reportingCodeID: 260,
+              reportingCodeName: "260 - Scarlet reporting code 1",
+              projectTypeName: "Fixed Price Project",
+              projectTypeId: 1,
+              employeeAllocationStatus: null,
+              notes: "",
+              capacityWeeksGroup: [
+                {
+                  resourceAllocationId: 3393,
+                  capacityPercent: 0,
+                  week: 2,
+                },
+                {
+                  resourceAllocationId: 3393,
+                  capacityPercent: 0,
+                  week: 3,
+                },
+                {
+                  resourceAllocationId: 3393,
+                  capacityPercent: 0,
+                  week: 4,
+                },
+                {
+                  resourceAllocationId: 3393,
+                  capacityPercent: 0,
+                  week: 5,
+                },
+                {
+                  resourceAllocationId: 3393,
+                  capacityPercent: 100,
+                  week: 1,
+                },
+              ],
+              capacityWeeksGroupLastMonth: null,
+              actualDetail: [
+                {
+                  week: 1,
+                  percentage: 0,
+                },
+                {
+                  week: 2,
+                  percentage: 0,
+                },
+                {
+                  week: 3,
+                  percentage: 0,
+                },
+                {
+                  week: 4,
+                  percentage: 0,
+                },
+                {
+                  week: 5,
+                  percentage: 0,
+                },
+              ],
+              actualDetailLastMonth: null,
+            },
+          ],
+          userID: "4FA5CA9F-DA42-4E38-7188-08DB5B36CC01",
+          fullName: "test lead",
+          empTypeName: "Full-Time",
+          positionID: 53,
+          positionName: "Analytics / BI",
+          officeId: 2,
+          officeName: "Saigon",
+          capacityWeeks: [
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 135,
+              week: 2,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 1000,
+              week: 3,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 0,
+              week: 5,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 823,
+              week: 1,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 5252,
+              week: 4,
+            },
+          ],
+          capacityWeeksLastMonth: null,
+          actuals: [
+            {
+              week: 1,
+              percentage: 0,
+            },
+            {
+              week: 2,
+              percentage: 0,
+            },
+            {
+              week: 3,
+              percentage: 0,
+            },
+            {
+              week: 4,
+              percentage: 0,
+            },
+            {
+              week: 5,
+              percentage: 0,
+            },
+          ],
+          actualsLastMonth: null,
+        },
+        {
+          teamId: 293,
+          teamName: "Braver",
+          teamLead: "Tuan Nguyen",
+          resourceAllocations: [
+            {
+              id: 3337,
+              customerID: 24,
+              customerName: "e-GoodManners (Aust) Pty Ltd",
+              reportingCodeID: 232,
+              reportingCodeName: "232 - tan tran",
+              projectTypeName: "Fixed Price Project",
+              projectTypeId: 1,
+              employeeAllocationStatus: null,
+              notes: "",
+              capacityWeeksGroup: [
+                {
+                  resourceAllocationId: 3337,
+                  capacityPercent: 0,
+                  week: 2,
+                },
+                {
+                  resourceAllocationId: 3337,
+                  capacityPercent: 0,
+                  week: 3,
+                },
+                {
+                  resourceAllocationId: 3337,
+                  capacityPercent: 0,
+                  week: 4,
+                },
+                {
+                  resourceAllocationId: 3337,
+                  capacityPercent: 0,
+                  week: 5,
+                },
+                {
+                  resourceAllocationId: 3337,
+                  capacityPercent: 90,
+                  week: 1,
+                },
+              ],
+              capacityWeeksGroupLastMonth: null,
+              actualDetail: [
+                {
+                  week: 1,
+                  percentage: 0,
+                },
+                {
+                  week: 2,
+                  percentage: 0,
+                },
+                {
+                  week: 3,
+                  percentage: 0,
+                },
+                {
+                  week: 4,
+                  percentage: 0,
+                },
+                {
+                  week: 5,
+                  percentage: 0,
+                },
+              ],
+              actualDetailLastMonth: null,
+            },
+            {
+              id: 3484,
+              customerID: 24,
+              customerName: "e-GoodManners (Aust) Pty Ltd",
+              reportingCodeID: 235,
+              reportingCodeName: "235 - tan tran create",
+              projectTypeName: "Fixed Price Project",
+              projectTypeId: 1,
+              employeeAllocationStatus: null,
+              notes: "dd",
+              capacityWeeksGroup: [
+                {
+                  resourceAllocationId: 3484,
+                  capacityPercent: 0,
+                  week: 2,
+                },
+                {
+                  resourceAllocationId: 3484,
+                  capacityPercent: 0,
+                  week: 3,
+                },
+                {
+                  resourceAllocationId: 3484,
+                  capacityPercent: 0,
+                  week: 4,
+                },
+                {
+                  resourceAllocationId: 3484,
+                  capacityPercent: 0,
+                  week: 5,
+                },
+                {
+                  resourceAllocationId: 3484,
+                  capacityPercent: 40,
+                  week: 1,
+                },
+              ],
+              capacityWeeksGroupLastMonth: null,
+              actualDetail: [
+                {
+                  week: 1,
+                  percentage: 0,
+                },
+                {
+                  week: 2,
+                  percentage: 0,
+                },
+                {
+                  week: 3,
+                  percentage: 0,
+                },
+                {
+                  week: 4,
+                  percentage: 0,
+                },
+                {
+                  week: 5,
+                  percentage: 0,
+                },
+              ],
+              actualDetailLastMonth: null,
+            },
+            {
+              id: 3467,
+              customerID: 25,
+              customerName: "Elite Football Tours",
+              reportingCodeID: 235,
+              reportingCodeName: "235 - tan tran create",
+              projectTypeName: "Fixed Price Project",
+              projectTypeId: 1,
+              employeeAllocationStatus: null,
+              notes: "",
+              capacityWeeksGroup: [
+                {
+                  resourceAllocationId: 3467,
+                  capacityPercent: 0,
+                  week: 3,
+                },
+                {
+                  resourceAllocationId: 3467,
+                  capacityPercent: 0,
+                  week: 4,
+                },
+                {
+                  resourceAllocationId: 3467,
+                  capacityPercent: 0,
+                  week: 5,
+                },
+                {
+                  resourceAllocationId: 3467,
+                  capacityPercent: 20,
+                  week: 2,
+                },
+                {
+                  resourceAllocationId: 3467,
+                  capacityPercent: 100,
+                  week: 1,
+                },
+              ],
+              capacityWeeksGroupLastMonth: null,
+              actualDetail: [
+                {
+                  week: 1,
+                  percentage: 0,
+                },
+                {
+                  week: 2,
+                  percentage: 0,
+                },
+                {
+                  week: 3,
+                  percentage: 0,
+                },
+                {
+                  week: 4,
+                  percentage: 0,
+                },
+                {
+                  week: 5,
+                  percentage: 0,
+                },
+              ],
+              actualDetailLastMonth: null,
+            },
+            {
+              id: 3483,
+              customerID: 50,
+              customerName: "Silicon Stack Pty Ltd",
+              reportingCodeID: 98,
+              reportingCodeName: "082 - Time Keeper Portal",
+              projectTypeName: "DTM/Outsourcing",
+              projectTypeId: 2,
+              employeeAllocationStatus: null,
+              notes: "de de",
+              capacityWeeksGroup: [
+                {
+                  resourceAllocationId: 3483,
+                  capacityPercent: 10,
+                  week: 2,
+                },
+                {
+                  resourceAllocationId: 3483,
+                  capacityPercent: 10,
+                  week: 3,
+                },
+                {
+                  resourceAllocationId: 3483,
+                  capacityPercent: 10,
+                  week: 4,
+                },
+                {
+                  resourceAllocationId: 3483,
+                  capacityPercent: 10,
+                  week: 5,
+                },
+                {
+                  resourceAllocationId: 3483,
+                  capacityPercent: 100,
+                  week: 1,
+                },
+              ],
+              capacityWeeksGroupLastMonth: null,
+              actualDetail: [
+                {
+                  week: 1,
+                  percentage: 0,
+                },
+                {
+                  week: 2,
+                  percentage: 0,
+                },
+                {
+                  week: 3,
+                  percentage: 0,
+                },
+                {
+                  week: 4,
+                  percentage: 0,
+                },
+                {
+                  week: 5,
+                  percentage: 0,
+                },
+              ],
+              actualDetailLastMonth: null,
+            },
+          ],
+          userID: "7440E1DB-110F-4CC8-B6D5-8E6B1E607BFF",
+          fullName: "Tuan Nguyen",
+          empTypeName: "Full-Time",
+          positionID: 47,
+          positionName: "Technical Architect",
+          officeId: 2,
+          officeName: "Saigon",
+          capacityWeeks: [
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 30,
+              week: 2,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 10,
+              week: 3,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 10,
+              week: 4,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 10,
+              week: 5,
+            },
+            {
+              resourceAllocationId: 0,
+              capacityPercent: 330,
+              week: 1,
+            },
+          ],
+          capacityWeeksLastMonth: null,
+          actuals: [
+            {
+              week: 1,
+              percentage: 0,
+            },
+            {
+              week: 2,
+              percentage: 0,
+            },
+            {
+              week: 3,
+              percentage: 0,
+            },
+            {
+              week: 4,
+              percentage: 0,
+            },
+            {
+              week: 5,
+              percentage: 0,
+            },
+          ],
+          actualsLastMonth: null,
+        },
+      ];
+      const App = {
+        setup() {
+          //Ref
+          const isCompareToLastMonth = ref(false);
+          //Reactive
+          const tableOptions = reactive({
+            value: tableData,
+            showGridlines: true,
+            stripedRows: true,
+            paginator: true,
+            removableSort: true,
+            rows: 5,
+            rowsPerPageOptions: [5, 10, 20, 100],
+            dataKey: "userID",
+            expandedRows: [],
+            onRowExpand: (e) => (tableOptions.expandedRows = [e.data]),
+            onRowCollapse: (e) => (tableOptions.expandedRows = []),
+            class: {
+              "p-datatable-sm": true,
+            },
+          });
+          const smallerTableOptions = reactive({
+            dataName: "resourceAllocations",
+            editMode: "row",
+            editingRows: [],
+            class: {
+              "p-datatable-sm": true,
+            },
+          });
+          //Computed
+          const columns = computed(() => [
+            {
+              expander: true,
+            },
+            {
+              header: "User",
+              field: "fullName",
+              sortable: true,
+            },
+            {
+              header: "Emp Type",
+              field: "empTypeName",
+              sortable: true,
+            },
+            {
+              header: "Position",
+              field: "positionName",
+              sortable: true,
+            },
+            {
+              header: "Office",
+              field: "officeName",
+              sortable: true,
+            },
+            ...Array.from(Array(isCompareToLastMonth.value ? 8 : 4).keys()).map(
+              (w, index) => ({
+                header: `Week ${index + 1}`,
+                colspan: 2,
+                children: [
+                  {
+                    header: "Planning",
+                    field: "planning",
+                    render: (data) => {
+                      return (
+                        data.capacityWeeks.find(
+                          ({ week }) => week === index + 1
+                        )?.capacityPercent ?? 0
+                      );
+                    },
+                  },
+                  {
+                    header: "Actual",
+                    field: "actual",
+                    render: (data) => {
+                      return (
+                        data.actuals.find(({ week }) => week === index + 1)
+                          ?.percentage ?? 0
+                      );
+                    },
+                  },
+                ],
+              })
+            ),
+          ]);
+          const smallerColumns = computed(() => [
+            {
+              header: "Customer",
+              field: "customerName",
+              sortable: true,
+            },
+            {
+              header: "Reporting Code",
+              field: "reportingCodeName",
+              sortable: true,
+            },
+            {
+              header: "Project Type",
+              field: "projectTypeName",
+              sortable: true,
+            },
+            {
+              header: "Note",
+              field: "notes",
+            },
+            {
+              header: "Status",
+              field: "employeeAllocationStatus",
+              sortable: true,
+            },
+            ...Array.from(Array(isCompareToLastMonth.value ? 8 : 4).keys()).map(
+              (w, index) => ({
+                header: `Week ${index + 1}`,
+                field: "week",
+                isEditable: true,
+                render: (data) => {
+                  return (
+                    data.capacityWeeksGroup.find(
+                      ({ week }) => week === index + 1
+                    )?.capacityPercent ?? 0
+                  );
+                },
+              })
+            ),
+            {
+              rowEditor: true,
+            },
+          ]);
+
+          return {
+            columns,
+            smallerColumns,
+            isCompareToLastMonth,
+            tableOptions,
+            smallerTableOptions,
+          };
+        },
+      };
+
+      const vueInstance = createApp(App);
+      vueInstance
+        .use(
+          primevue.config.default
+          // {
+          //   unstyled: true,
+          //   pt: primevue.passthrough.tailwind,
+          // }
+        )
+        .component("p-input-switch", primevue.inputswitch)
+        .component("p-input-number", primevue.inputnumber)
+        .component("p-datatable", primevue.datatable)
+        .component("p-row", primevue.row)
+        .component("p-column", primevue.column)
+        .component("p-column-group", primevue.columngroup)
+        .mount("#app");
+    </script>
+  </body>
+</html>

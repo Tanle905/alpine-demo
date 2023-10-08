@@ -26,35 +26,30 @@
           <span>Is Compare To Last Month</span>
         </div>
         <p-datatable v-bind:="tableOptions">
-          <!--For displaying grouped column header-->
+          <!--For displaying column header-->
           <p-column-group type="header">
-            <template v-for="column in columns">
-              <p-row>
-                <p-column v-bind:="column"></p-column>
-              </p-row>
-              <template v-if="column.children">
-                <p-row>
-                  <template v-for="child in column.children">
-                    <p-column v-bind:="child"></p-column>
-                  </template>
-                </p-row>
-              </template>
-            </template>
+            <p-row>
+              <p-column
+                v-for="column in columns"
+                v-bind:="column"
+                v-bind:rowspan="column.children ? 1:2"
+            /></p-row>
+            <p-row>
+              <p-column
+                v-for="column in flattenColumns(columns)"
+                v-bind:="column"
+            /></p-row>
           </p-column-group>
-          <template v-for="column in columns">
-            <!--For actual columns-->
-            <template
-              v-for="child in column.children ? column.children : [column]"
-            >
-              <p-column v-bind:="child"
-                ><template v-if="child.render" #body="{ data }">
-                  {{ child.render(data) }}
-                </template>
-                <template v-if="child.isEditable" #editor="{ data, field }">
-                  <p-input-number v-model="data[field]" /></template
-              ></p-column>
+          <!--For data rendering-->
+          <p-column
+            v-bind:="column"
+            v-for="column in flattenColumns(columns, true)"
+            ><template v-if="column.render" #body="{ data }">
+              {{ column.render(data) }}
             </template>
-          </template>
+            <template v-if="column.isEditable" #editor="{ data, field }">
+              <p-input-number v-model="data[field]" /></template
+          ></p-column>
           <template #expansion="slotProps">
             <div class="p-3">
               <p-datatable
@@ -62,18 +57,30 @@
                 v-model:editing-rows="smallerTableOptions.editingRows"
                 v-bind:value="slotProps.data[smallerTableOptions.dataName]"
               >
-                <template v-for="column in smallerColumns">
-                  <p-column v-bind:="column"
-                    ><template v-if="column.render" #body="{ data }">
-                      {{ column.render(data) }}
-                    </template>
-                    <template
-                      v-if="column.isEditable"
-                      #editor="{ data, field }"
-                    >
-                      <p-input-number v-model="data[field]" /></template
-                  ></p-column>
-                </template>
+                <!--For displaying column header-->
+                <p-column-group type="header">
+                  <p-row>
+                    <p-column
+                      v-for="column in smallerColumns"
+                      v-bind:="column"
+                      v-bind:rowspan="column.children ? 1:2"
+                  /></p-row>
+                  <p-row>
+                    <p-column
+                      v-for="column in flattenColumns(columns)"
+                      v-bind:="column"
+                  /></p-row>
+                </p-column-group>
+                <!--For data rendering-->
+                <p-column
+                  v-bind:="column"
+                  v-for="column in flattenColumns(smallerColumns, true)"
+                  ><template v-if="column.render" #body="{ data }">
+                    {{ column.render(data) }}
+                  </template>
+                  <template v-if="column.isEditable" #editor="{ data, field }">
+                    <p-input-number v-model="data[field]" /></template
+                ></p-column>
               </p-datatable>
             </div>
           </template>
@@ -81,7 +88,7 @@
       </div>
     </div>
     <script>
-      const { createApp, ref, reactive, computed } = Vue;
+      const { createApp, ref, reactive, computed, watchEffect } = Vue;
 
       const tableData = [
         {
@@ -98,8 +105,7 @@
               projectTypeName: "Fixed Price Project",
               projectTypeId: 1,
               employeeAllocationStatus: null,
-              notes:
-                "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+              notes: "d",
               capacityWeeksGroup: [
                 {
                   resourceAllocationId: 3370,
@@ -2234,8 +2240,11 @@
             showGridlines: true,
             stripedRows: true,
             paginator: true,
+            paginatorTemplate:
+              "RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink",
+            currentPageReportTemplate: "{first} to {last} of {totalRecords}",
             removableSort: true,
-            rows: 5,
+            rows: 10,
             rowsPerPageOptions: [5, 10, 20, 100],
             dataKey: "userID",
             expandedRows: [],
@@ -2254,60 +2263,34 @@
             },
           });
           //Computed
-          const columns = computed(() => [
-            {
-              expander: true,
-            },
-            {
-              header: "User",
-              field: "fullName",
-              sortable: true,
-            },
-            {
-              header: "Emp Type",
-              field: "empTypeName",
-              sortable: true,
-            },
-            {
-              header: "Position",
-              field: "positionName",
-              sortable: true,
-            },
-            {
-              header: "Office",
-              field: "officeName",
-              sortable: true,
-            },
-            ...Array.from(Array(isCompareToLastMonth.value ? 8 : 4).keys()).map(
-              (w, index) => ({
-                header: `Week ${index + 1}`,
-                colspan: 2,
-                children: [
-                  {
-                    header: "Planning",
-                    field: "planning",
-                    render: (data) => {
-                      return (
-                        data.capacityWeeks.find(
-                          ({ week }) => week === index + 1
-                        )?.capacityPercent ?? 0
-                      );
-                    },
-                  },
-                  {
-                    header: "Actual",
-                    field: "actual",
-                    render: (data) => {
-                      return (
-                        data.actuals.find(({ week }) => week === index + 1)
-                          ?.percentage ?? 0
-                      );
-                    },
-                  },
-                ],
-              })
-            ),
-          ]);
+          const columns = computed(() => {
+            return [
+              {
+                expander: true,
+              },
+              {
+                header: "User",
+                field: "fullName",
+                sortable: true,
+              },
+              {
+                header: "Emp Type",
+                field: "empTypeName",
+                sortable: true,
+              },
+              {
+                header: "Position",
+                field: "positionName",
+                sortable: true,
+              },
+              {
+                header: "Office",
+                field: "officeName",
+                sortable: true,
+              },
+              ...calculateWeekValue(),
+            ];
+          });
           const smallerColumns = computed(() => [
             {
               header: "Customer",
@@ -2333,24 +2316,97 @@
               field: "employeeAllocationStatus",
               sortable: true,
             },
-            ...Array.from(Array(isCompareToLastMonth.value ? 8 : 4).keys()).map(
-              (w, index) => ({
-                header: `Week ${index + 1}`,
-                field: "week",
-                isEditable: true,
-                render: (data) => {
-                  return (
-                    data.capacityWeeksGroup.find(
-                      ({ week }) => week === index + 1
-                    )?.capacityPercent ?? 0
-                  );
-                },
-              })
-            ),
+            ...calculateWeekValue(true),
             {
               rowEditor: true,
             },
           ]);
+
+          function calculateWeekValue(isEditable = false) {
+            return Array.from(Array(5).keys()).map((w, index) => ({
+              header: `Week ${index + 1}`,
+              colspan: isCompareToLastMonth.value ? 4 : 2,
+              isEditable,
+              children: [
+                {
+                  header: "Planning",
+                  field: `planning-week-${w}`,
+                  isEditable: true,
+                  render: (data) => {
+                    return (
+                      (data.capacityWeeks ?? data.capacityWeeksGroup).find(
+                        ({ week }) => week === index + 1
+                      )?.capacityPercent ?? 0
+                    );
+                  },
+                },
+                ...(isCompareToLastMonth.value
+                  ? [
+                      {
+                        header: "Planning Last Month",
+                        field: `planning-week-${w}-last-month`,
+                        render: (data) => {
+                          return (
+                            (
+                              data.capacityWeeksLastMonth ??
+                              data.capacityWeeksGroupLastMonth
+                            )?.find(({ week }) => week === index + 1)
+                              ?.capacityPercent ?? 0
+                          );
+                        },
+                      },
+                    ]
+                  : []),
+                {
+                  header: "Actual",
+                  field: `actual-week-${w}`,
+                  isEditable: true,
+                  render: (data) => {
+                    return (
+                      (data.actuals ?? data.actualDetail).find(
+                        ({ week }) => week === index + 1
+                      )?.percentage ?? 0
+                    );
+                  },
+                },
+                ...(isCompareToLastMonth.value
+                  ? [
+                      {
+                        header: "Actual Last Month",
+                        field: `actual-week-${w}-last-month`,
+                        render: (data) => {
+                          return (
+                            (
+                              data.actualsLastMonth ??
+                              data.actualDetailLastMonth
+                            )?.find(({ week }) => week === index + 1)
+                              ?.percentage ?? 0
+                          );
+                        },
+                      },
+                    ]
+                  : []),
+              ],
+            }));
+          }
+
+          function flattenColumns(columns, isIncludeMainColumn) {
+            return columns.reduce(
+              (prev, cur) => [
+                ...prev,
+                ...(cur.children
+                  ? cur.children
+                  : isIncludeMainColumn
+                  ? [cur]
+                  : []),
+              ],
+              []
+            );
+          }
+
+          function log(item) {
+            console.log(item);
+          }
 
           return {
             columns,
@@ -2358,6 +2414,8 @@
             isCompareToLastMonth,
             tableOptions,
             smallerTableOptions,
+            flattenColumns,
+            log,
           };
         },
       };

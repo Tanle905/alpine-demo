@@ -8,9 +8,10 @@
       href="https://cdn.jsdelivr.net/npm/primevue@3.35.0/resources/themes/lara-light-blue/theme.css"
     />
     <!-- import JavaScript -->
-    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/primevue@3.35.0/core/core.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/primevue@3.35.0/toolbar/toolbar.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/primevue@3.35.0/inputswitch/inputswitch.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/primevue@3.35.0/datatable/datatable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/primevue@3.35.0/column/column.min.js"></script>
@@ -21,11 +22,21 @@
   <body>
     <div id="app" class="container h-screen mx-auto my-5">
       <div class="space-y-2">
-        <div class="flex items-center space-x-2">
-          <p-input-switch v-model="isCompareToLastMonth"></p-input-switch>
-          <span>Is Compare To Last Month</span>
-        </div>
-        <p-datatable v-bind:="tableOptions">
+        <p-toolbar>
+          <template #center>
+            <p-input-switch v-model="isCompareToLastMonth"></p-input-switch>
+            <span class="ml-2">Is Compare To Last Month</span>
+          </template>
+          <template #end>
+            <p-button
+              label="Export"
+              icon="pi pi-upload"
+              severity="help"
+              v-on:click="handleExportTable"
+            ></p-button>
+          </template>
+        </p-toolbar>
+        <p-datatable v-bind:="tableOptions" ref="table">
           <!--For displaying column header-->
           <p-column-group type="header">
             <p-row>
@@ -50,11 +61,29 @@
             <template v-if="column.isEditable" #editor="{ data, field }">
               <p-input-number v-model="data[field]" /></template
           ></p-column>
-          <template #expansion="slotProps">
-            <div class="p-3">
+          <template v-if="tableOptions.expandedRows" #expansion="slotProps">
+            <div class="p-3 w-full">
+              <p-toolbar class="mb-4">
+                <template #start>
+                  <p-button
+                    label="Add New Entry"
+                    icon="pi pi-plus"
+                    severity="success"
+                    class="mr-2"
+                  ></p-button>
+                  <p-button
+                    label="Delete"
+                    v-on:click="handleDeleteData"
+                    icon="pi pi-trash"
+                    severity="danger"
+                    :disabled="!smallerTableOptions?.selectedRows.length"
+                  ></p-button>
+                </template>
+              </p-toolbar>
               <p-datatable
                 v-bind:="smallerTableOptions"
                 v-model:editing-rows="smallerTableOptions.editingRows"
+                v-model:selection="smallerTableOptions.selectedRows"
                 v-bind:value="slotProps.data[smallerTableOptions.dataName]"
               >
                 <!--For displaying column header-->
@@ -79,7 +108,9 @@
                     {{ column.render(data) }}
                   </template>
                   <template v-if="column.isEditable" #editor="{ data, field }">
-                    <p-input-number v-model="data[field]" /></template
+                    <p-input-number
+                      inputStyle="width:5px"
+                      v-model="data[field]" /></template
                 ></p-column>
               </p-datatable>
             </div>
@@ -87,6 +118,13 @@
         </p-datatable>
       </div>
     </div>
+    <script>
+      tailwind.config = {
+        corePlugins: {
+          preflight: false,
+        },
+      };
+    </script>
     <script>
       const { createApp, ref, reactive, computed, watchEffect } = Vue;
 
@@ -2230,13 +2268,16 @@
           actualsLastMonth: null,
         },
       ];
+      const data = reactive(tableData);
       const App = {
         setup() {
           //Ref
           const isCompareToLastMonth = ref(false);
+          const table = ref();
           //Reactive
           const tableOptions = reactive({
-            value: tableData,
+            value: data,
+            scrollable: true,
             showGridlines: true,
             stripedRows: true,
             paginator: true,
@@ -2248,16 +2289,28 @@
             rowsPerPageOptions: [5, 10, 20, 100],
             dataKey: "userID",
             expandedRows: [],
-            onRowExpand: (e) => (tableOptions.expandedRows = [e.data]),
-            onRowCollapse: (e) => (tableOptions.expandedRows = []),
+            onRowExpand: (e) => {
+              tableOptions.expandedRows = [e.data];
+              smallerTableOptions.selectedRows = [];
+            },
+            onRowCollapse: (e) => {
+              tableOptions.expandedRows = [];
+              smallerTableOptions.selectedRows = [];
+            },
             class: {
               "p-datatable-sm": true,
             },
           });
           const smallerTableOptions = reactive({
             dataName: "resourceAllocations",
+            scrollable: true,
             editMode: "row",
             editingRows: [],
+            selectedRows: [],
+            footer: "",
+            style: {
+              width: "100%",
+            },
             class: {
               "p-datatable-sm": true,
             },
@@ -2267,11 +2320,13 @@
             return [
               {
                 expander: true,
+                frozen: true,
               },
               {
                 header: "User",
                 field: "fullName",
                 sortable: true,
+                frozen: true,
               },
               {
                 header: "Emp Type",
@@ -2293,14 +2348,20 @@
           });
           const smallerColumns = computed(() => [
             {
+              selectionMode: "multiple",
+              frozen: true,
+            },
+            {
               header: "Customer",
               field: "customerName",
               sortable: true,
+              frozen: true,
             },
             {
               header: "Reporting Code",
               field: "reportingCodeName",
               sortable: true,
+              frozen: true,
             },
             {
               header: "Project Type",
@@ -2360,7 +2421,6 @@
                 {
                   header: "Actual",
                   field: `actual-week-${w}`,
-                  isEditable: true,
                   render: (data) => {
                     return (
                       (data.actuals ?? data.actualDetail).find(
@@ -2404,17 +2464,38 @@
             );
           }
 
+          function handleDeleteData() {
+            const [row] = tableOptions.expandedRows;
+            const currentIndex = data.findIndex(
+              ({ userID }) => userID == row.userID
+            );
+
+            data[currentIndex].resourceAllocations = data[
+              currentIndex
+            ].resourceAllocations.filter(
+              (entry) =>
+                !smallerTableOptions.selectedRows.some((r) => r.id === entry.id)
+            );
+          }
+
+          function handleExportTable() {
+            table.value.exportCSV();
+          }
+
           function log(item) {
             console.log(item);
           }
 
           return {
+            table,
             columns,
             smallerColumns,
             isCompareToLastMonth,
             tableOptions,
             smallerTableOptions,
             flattenColumns,
+            handleDeleteData,
+            handleExportTable,
             log,
           };
         },
@@ -2422,14 +2503,11 @@
 
       const vueInstance = createApp(App);
       vueInstance
-        .use(
-          primevue.config.default
-          // {
-          //   unstyled: true,
-          //   pt: primevue.passthrough.tailwind,
-          // }
-        )
+        .use(primevue.config.default)
+        .component("p-button", primevue.button)
+        .component("Badge", primevue.badge)
         .component("p-input-switch", primevue.inputswitch)
+        .component("p-toolbar", primevue.toolbar)
         .component("p-input-number", primevue.inputnumber)
         .component("p-datatable", primevue.datatable)
         .component("p-row", primevue.row)
